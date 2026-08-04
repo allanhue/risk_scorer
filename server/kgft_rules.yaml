@@ -1,0 +1,38 @@
+# Simplified Kenya Green Finance Taxonomy (KGFT) mapping
+# green_sectors: activities eligible for green classification
+# risk_counties: counties with elevated climate hazard exposure (drought/flood)
+
+green_sectors:
+  energy:
+    eligible_activities: ["solar", "wind", "geothermal", "mini-grid", "clean cooking"]
+    default_green: true
+  agriculture:
+    eligible_activities: ["irrigation", "agroforestry", "climate-smart", "conservation tillage"]
+    default_green: false   # only green if activity matches eligible list
+  transport:
+    eligible_activities: ["electric vehicle", "public transit"]
+    default_green: false
+  construction:
+    eligible_activities: ["green building", "energy-efficient"]
+    default_green: false
+  manufacturing:
+    eligible_activities: ["resource efficiency", "waste reduction"]
+    default_green: false
+
+county_risk:
+  high:
+    - Turkana
+    - Marsabit
+    - Wajir
+    - Mandera
+    - Garissa
+  medium:
+    - Kitui
+    - Makueni
+    - Machakos
+    - Baringo
+  low:
+    - Nairobi
+    - Mombasa
+    - Kisumu
+    - Nakuru
