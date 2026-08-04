@@ -1,5 +1,6 @@
 import yaml
 from pathlib import Path
+from climate import get_rainfall_risk
 
 RULES_PATH = Path(__file__).parent / "kgft_rules.yaml"
 
@@ -11,45 +12,68 @@ def classify_green(sector: str, purpose: str) -> bool:
     sector_rules = RULES["green_sectors"].get(sector)
     if not sector_rules:
         return False
-
     if sector_rules["default_green"]:
         return True
-
     purpose_lower = purpose.lower()
     return any(activity in purpose_lower for activity in sector_rules["eligible_activities"])
 
 
-def get_county_risk(county: str) -> str:
+def get_static_county_risk(county: str) -> str:
     for level, counties in RULES["county_risk"].items():
         if county in counties:
             return level
-    return "medium"  # unlisted counties default to medium
+    return "medium"
 
 
 def score_loan(loan_amount: float, purpose: str, county: str, sector: str) -> dict:
     is_green = classify_green(sector, purpose)
-    county_risk = get_county_risk(county)
+    static_risk = get_static_county_risk(county)
+    climate = get_rainfall_risk(county)
 
-    # Combine green status + county climate risk into overall risk level
-    if is_green and county_risk == "low":
-        risk_level = "low"
-        confidence = 0.85
-    elif is_green and county_risk == "medium":
-        risk_level = "low"
-        confidence = 0.72
-    elif is_green and county_risk == "high":
-        risk_level = "medium"
-        confidence = 0.65
-    elif not is_green and county_risk == "high":
-        risk_level = "high"
-        confidence = 0.80
+    effective_risk = static_risk
+    climate_signal = climate.get("status")
+    anomaly_pct = climate.get("anomaly_pct") or 0
+
+    if climate_signal == "drought_risk" and effective_risk != "high":
+        if static_risk == "low":
+            effective_risk = "medium"
+        elif static_risk == "medium":
+            effective_risk = "high" if anomaly_pct <= -60 else "medium"
+        else:
+            effective_risk = "high"
+    elif climate_signal == "flood_risk" and effective_risk != "high":
+        if static_risk == "low":
+            effective_risk = "medium"
+        elif static_risk == "medium":
+            effective_risk = "medium"
+        else:
+            effective_risk = "high"
+
+    if is_green and effective_risk == "low":
+        risk_level, confidence = "low", 0.83
+    elif is_green and effective_risk == "medium":
+        risk_level, confidence = "low", 0.70
+    elif is_green and effective_risk == "high":
+        risk_level, confidence = "medium", 0.63
+    elif not is_green and effective_risk == "high":
+        if climate_signal in ("drought_risk", "flood_risk") and abs(anomaly_pct) < 60:
+            risk_level, confidence = "medium", 0.70
+        else:
+            risk_level, confidence = "high", 0.78
     else:
-        risk_level = "medium"
-        confidence = 0.68
+        risk_level, confidence = "medium", 0.66
+
+    climate_note = ""
+    if climate["status"] == "drought_risk":
+        climate_note = f" Recent rainfall is {climate['anomaly_pct']}% below normal — active drought signal."
+    elif climate["status"] == "flood_risk":
+        climate_note = f" Recent rainfall is {climate['anomaly_pct']}% above normal — active flood signal."
+    elif climate["status"] == "unknown":
+        climate_note = " Live climate data unavailable; used baseline county risk only."
 
     explanation = (
         f"{'Green-aligned' if is_green else 'Not green-aligned'} activity in {sector} sector. "
-        f"{county} has {county_risk} climate hazard exposure."
+        f"{county} has {static_risk} baseline climate hazard exposure.{climate_note}"
     )
 
     return {
@@ -57,4 +81,5 @@ def score_loan(loan_amount: float, purpose: str, county: str, sector: str) -> di
         "isGreen": is_green,
         "confidence": confidence,
         "explanation": explanation,
+        "climateSignal": climate,
     }

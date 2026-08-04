@@ -48,3 +48,4 @@ next-env.d.ts
 
 # python
 /server/venv/
+climate_cache.json
