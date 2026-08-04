@@ -20,4 +20,23 @@ export interface ScoreResponse {
   confidence: number;
   explanation: string;
   climateSignal: ClimateSignal;
+  loanId: string;
+}
+export interface LoanHistoryItem {
+  id: string;
+  loanAmount: number;
+  purpose: string;
+  county: string;
+  sector: string;
+  createdAt: string;
+  riskLevel: string | null;
+  isGreen: boolean | null;
+  confidence: number | null;
+}
+
+export interface LoanHistoryResponse {
+  items: LoanHistoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

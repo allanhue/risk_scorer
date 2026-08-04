@@ -1,4 +1,5 @@
-import LoanForm from "../components/LoanForm";
+import LoanForm from "@/loan/form/page";
+import LoanHistory from "@/loan/history/page";
 
 export default function DashboardPage() {
   return (
@@ -16,6 +17,7 @@ export default function DashboardPage() {
         </div>
 
         <LoanForm />
+        <LoanHistory />
       </div>
     </div>
   );

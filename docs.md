@@ -33,7 +33,7 @@ DATABASE_URL=postgresql://user:password@ep-xxxx-pooler.region.aws.neon.tech/dbna
 
 Note the `-pooler` in the Neon hostname — required, see "Fixes" below.
 
-## Fixes and lessons learned
+## Fixes and implemetations 
 
 | Issue | Cause | Fix |
 |---|---|---|

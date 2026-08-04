@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { LoanInput, ScoreResponse } from "@/lib/types";
 import { scoreLoan } from "@/lib/api";
-import ScoreResult from "./ScoreResult";
+import ScoreResult from "../../scores/results/page";
 
 const SECTORS = [
   "energy",
@@ -134,7 +134,7 @@ export default function LoanForm() {
 
       <div className="min-h-72 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         {result ? (
-          <ScoreResult result={result} />
+          <ScoreResult key={result.loanId} result={result} />
         ) : (
           <div className="flex h-full min-h-64 flex-col justify-center">
             <p className="text-sm font-medium text-emerald-700">
