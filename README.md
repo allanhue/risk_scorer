@@ -1,6 +1,6 @@
 # Risk Scorer
 
-A simple loan risk scoring app built with Next.js and Clerk for authentication.
+Loan  scoring app built with Next.js and Clerk for authentication.
 
 ## What it does
 
