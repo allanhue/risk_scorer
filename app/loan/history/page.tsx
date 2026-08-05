@@ -17,7 +17,7 @@ const SCORING_SERVICE_URL =
 
 const PAGE_SIZE = 5;
 
-export default function LoanHistory() {
+export default function LoanHistory({ refreshTrigger }: { refreshTrigger?: number }) {
   const { user } = useUser();
   const [loans, setLoans] = useState<LoanHistoryItem[]>([]);
   const [page, setPage] = useState(1);
@@ -37,7 +37,13 @@ export default function LoanHistory() {
         setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [user?.id, page]);
+  }, [user?.id, page, refreshTrigger]);
+
+  useEffect(() => {
+    if (refreshTrigger !== undefined) {
+      setPage(1);
+    }
+  }, [refreshTrigger]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

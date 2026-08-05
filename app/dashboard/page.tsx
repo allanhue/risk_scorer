@@ -1,7 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import LoanForm from "@/loan/form/page";
 import LoanHistory from "@/loan/history/page";
 
 export default function DashboardPage() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
   return (
     <div className="bg-[#f7faf8] px-4 py-10 sm:px-6">
       <div className="mx-auto max-w-6xl">
@@ -16,8 +21,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <LoanForm />
-        <LoanHistory />
+        <LoanForm onScored={() => setRefreshKey((k) => k + 1)} />
+        <LoanHistory refreshTrigger={refreshKey} />
       </div>
     </div>
   );

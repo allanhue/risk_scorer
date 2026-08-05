@@ -15,7 +15,7 @@ const SECTORS = [
 ];
 const COUNTIES = ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Turkana"];
 
-export default function LoanForm() {
+export default function LoanForm({ onScored }: { onScored?: () => void }) {
   const { user } = useUser();
   const [form, setForm] = useState<LoanInput>({
     loanAmount: 0,
@@ -38,6 +38,7 @@ export default function LoanForm() {
         userEmail: user?.primaryEmailAddress?.emailAddress,
       } as any);
       setResult(score);
+      onScored?.();
     } catch {
       setError("Something went wrong scoring this loan. Try again.");
     } finally {
