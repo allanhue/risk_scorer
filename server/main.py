@@ -31,6 +31,38 @@ class LoanInput(BaseModel):
     userEmail: Optional[str] = None
 
 
+class UserProfileInput(BaseModel):
+    userId: str
+    email: str
+    name: str
+    institution: str
+    role: str  # "OFFICER" | "AUDITOR" | "ADMIN"
+
+
+@app.post("/users/profile")
+def set_profile(profile: UserProfileInput, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter_by(id=profile.userId).first()
+    if not user:
+        user = models.User(id=profile.userId, email=profile.email)
+        db.add(user)
+
+    user.name = profile.name
+    user.institution = profile.institution
+    user.role = profile.role
+    db.commit()
+    db.refresh(user)
+
+    return {"id": user.id, "role": user.role, "name": user.name, "institution": user.institution}
+
+
+@app.get("/users/{user_id}")
+def get_user(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter_by(id=user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"id": user.id, "role": user.role, "name": user.name, "institution": user.institution}
+
+
 @app.post("/score")
 def score(loan: LoanInput, db: Session = Depends(get_db)):
     result = score_loan(loan.loanAmount, loan.purpose, loan.county, loan.sector)
@@ -124,6 +156,36 @@ def list_loans(userId: str, page: int = 1, pageSize: int = 5, db: Session = Depe
                 "riskLevel": loan.score.risk_level if loan.score else None,
                 "isGreen": loan.score.is_green if loan.score else None,
                 "confidence": loan.score.confidence if loan.score else None,
+            }
+            for loan in loans
+        ],
+        "total": total,
+        "page": page,
+        "pageSize": pageSize,
+    }
+
+@app.get("/loans/all")
+def list_all_loans(requesterId: str, page: int = 1, pageSize: int = 10, db: Session = Depends(get_db)):
+    requester = db.query(models.User).filter_by(id=requesterId).first()
+    if not requester or requester.role not in ("AUDITOR", "ADMIN"):
+        raise HTTPException(status_code=403, detail="Not authorized to view all loans")
+
+    query = db.query(models.Loan).order_by(models.Loan.created_at.desc())
+    total = query.count()
+    loans = query.offset((page - 1) * pageSize).limit(pageSize).all()
+
+    return {
+        "items": [
+            {
+                "id": loan.id,
+                "loanAmount": loan.loan_amount,
+                "purpose": loan.purpose,
+                "county": loan.county,
+                "sector": loan.sector,
+                "createdAt": loan.created_at.isoformat(),
+                "riskLevel": loan.score.risk_level if loan.score else None,
+                "isGreen": loan.score.is_green if loan.score else None,
+                "submittedBy": loan.submitted_by.email if loan.submitted_by else "unknown",
             }
             for loan in loans
         ],

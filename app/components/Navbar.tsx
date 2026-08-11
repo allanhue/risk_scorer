@@ -2,51 +2,65 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth, UserButton } from "@clerk/nextjs";
+import { UserButton, useAuth, useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 
-const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
-];
+const SCORING_SERVICE_URL =
+  process.env.NEXT_PUBLIC_SCORING_SERVICE_URL || "http://localhost:8000";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const { isLoaded } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`${SCORING_SERVICE_URL}/users/${user.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setRole(data?.role || null))
+      .catch(() => setRole(null));
+  }, [user?.id]);
+
+  const LINKS = [
+    { href: "/", label: "Home" },
+    { href: "/dashboard", label: "Dashboard" },
+    ...(role === "AUDITOR" || role === "ADMIN"
+      ? [{ href: "/audit", label: "Audit View" }]
+      : []),
+  ];
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3 font-semibold text-emerald-900">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-700 text-sm font-bold text-white">
-            GT
-          </span>
-          <span className="text-base sm:text-lg">Green Taxonomy Scorer</span>
+    <nav className="border-b border-gray-200 bg-white">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <Link href="/" className="font-semibold text-green-800">
+          Green Taxonomy Scorer
         </Link>
 
-        <div className="flex items-center gap-2 text-sm sm:gap-3">
+        <div className="flex items-center gap-6 text-sm">
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={
                 pathname === link.href
-                  ? "rounded-md bg-emerald-50 px-3 py-2 font-medium text-emerald-800"
-                  : "rounded-md px-3 py-2 font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  ? "text-green-700 font-medium"
+                  : "text-gray-600 hover:text-gray-900"
               }
             >
               {link.label}
             </Link>
           ))}
 
-          {isSignedIn ? (
-            <UserButton />
-          ) : (
+          {!isLoaded || !user ? (
             <Link
               href="/auth/login"
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 shadow-sm hover:border-emerald-300 hover:text-emerald-800"
+              className="border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50"
             >
               Sign in
             </Link>
+          ) : (
+            <UserButton afterSignOutUrl="/" />
           )}
         </div>
       </div>
