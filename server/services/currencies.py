@@ -1,0 +1,1 @@
+SUPPORTED_CURRENCIES = ["KES", "USD", "EUR", "GBP", "UGX", "TZS"]

@@ -3,7 +3,7 @@ import json
 import time
 from pathlib import Path
 from datetime import date, timedelta
-from county_coords import COUNTY_COORDS
+from services.county_coords import COUNTY_COORDS
 
 CACHE_FILE = Path(__file__).parent / "climate_cache.json"
 

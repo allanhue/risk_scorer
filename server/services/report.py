@@ -16,12 +16,21 @@ GRAY = HexColor("#6b7280")
 LIGHT_GRAY = HexColor("#e5e7eb")
 
 
-def generate_report_pdf(loan: dict, score: dict, climate: dict) -> bytes:
+def generate_report_pdf(loan: dict, score: dict, climate: dict, watermark: bool = False) -> bytes:
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
     x_margin = 20 * mm
     y = height - 25 * mm
+
+    if watermark:
+        c.saveState()
+        c.setFont("Helvetica-Bold", 60)
+        c.setFillColor(HexColor("#f0fdf4"))
+        c.translate(width / 2, height / 2)
+        c.rotate(45)
+        c.drawCentredString(0, 0, "DEMO — SAMPLE ONLY")
+        c.restoreState()
 
     # Title
     c.setFillColor(GREEN)
@@ -48,11 +57,13 @@ def generate_report_pdf(loan: dict, score: dict, climate: dict) -> bytes:
     # Loan details section
     y = _section_header(c, "Loan Details", x_margin, y)
     rows = [
-        ("Amount", f"KES {loan['loanAmount']:,.0f}"),
+        ("Amount", f"{loan.get('currency', 'KES')} {loan['loanAmount']:,.0f}"),
         ("Purpose", loan["purpose"]),
         ("Sector", loan["sector"].title()),
         ("County", loan["county"]),
     ]
+    if loan.get("description"):
+        rows.append(("Details", loan["description"]))
     y = _table(c, rows, x_margin, y, width - 2 * x_margin)
     y -= 8 * mm
 

@@ -20,12 +20,12 @@ export default function Home() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-md bg-emerald-700 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800"
-            >
-              Try the scorer
-            </Link>
+  <Link
+  href="/demo"
+  className="bg-green-700 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-green-800 transition"
+>
+  Try the scorer - free, no signup
+</Link>
             <Link
               href="/auth/register"
               className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-emerald-300 hover:text-emerald-800"

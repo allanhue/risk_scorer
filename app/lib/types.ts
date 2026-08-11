@@ -1,12 +1,13 @@
 export interface LoanInput {
   loanAmount: number;
+  currency: string;
   purpose: string;
+  description?: string;
   county: string;
   sector: string;
   userId?: string;
   userEmail?: string;
 }
-
 
 export interface ClimateSignal {
   status: "drought_risk" | "flood_risk" | "normal" | "unknown";
@@ -36,6 +37,25 @@ export interface LoanHistoryItem {
 
 export interface LoanHistoryResponse {
   items: LoanHistoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AllLoansItem {
+  id: string;
+  loanAmount: number;
+  purpose: string;
+  county: string;
+  sector: string;
+  createdAt: string;
+  riskLevel: string | null;
+  isGreen: boolean | null;
+  submittedBy: string;
+}
+
+export interface AllLoansResponse {
+  items: AllLoansItem[];
   total: number;
   page: number;
   pageSize: number;

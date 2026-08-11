@@ -4,22 +4,32 @@ import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { LoanInput, ScoreResponse } from "@/lib/types";
 import { scoreLoan } from "@/lib/api";
-import ScoreResult from "../../scores/results/page";
+import ScoreResult from "@/scores/results/page";
+import Select from "@/components/select";
+import Autocomplete from "@/components/autocomplete";
+import Spinner from "@/components/spinner";
+import { Sparkles } from "lucide-react";
 
-const SECTORS = [
-  "energy",
-  "agriculture",
-  "manufacturing",
-  "transport",
-  "construction",
-];
+const SECTORS = ["energy", "agriculture", "manufacturing", "transport", "construction"];
 const COUNTIES = ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Turkana"];
+const CURRENCIES = ["KES", "USD", "EUR", "GBP", "UGX", "TZS"];
+
+// Suggested purposes per sector — feeds the datalist for quick, guided entry
+const PURPOSE_SUGGESTIONS: Record<string, string[]> = {
+  energy: ["Solar mini-grid installation", "Wind turbine purchase", "Geothermal drilling", "Clean cooking stoves"],
+  agriculture: ["Drip irrigation system", "Agroforestry expansion", "Climate-smart seed purchase", "Conservation tillage equipment"],
+  transport: ["Electric vehicle purchase", "Public transit fleet upgrade"],
+  construction: ["Green building certification", "Energy-efficient retrofit"],
+  manufacturing: ["Resource efficiency upgrade", "Waste reduction system"],
+};
 
 export default function LoanForm({ onScored }: { onScored?: () => void }) {
   const { user } = useUser();
   const [form, setForm] = useState<LoanInput>({
     loanAmount: 0,
+    currency: "KES",
     purpose: "",
+    description: "",
     county: "",
     sector: "",
   });
@@ -46,111 +56,90 @@ export default function LoanForm({ onScored }: { onScored?: () => void }) {
     }
   }
 
-  const fieldClass =
-    "w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100";
+  const purposeSuggestions = form.sector ? PURPOSE_SUGGESTIONS[form.sector] || [] : [];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
-            Loan Amount (KES)
-          </label>
-          <input
-            type="number"
-            required
-            value={form.loanAmount || ""}
-            onChange={(e) => setForm({ ...form, loanAmount: Number(e.target.value) })}
-            className={fieldClass}
+    <div className="max-w-xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-7 rounded-xl border border-gray-200 shadow-sm">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Loan Amount</label>
+            <input
+              type="number"
+              required
+              min={0}
+              value={form.loanAmount || ""}
+              onChange={(e) => setForm({ ...form, loanAmount: Number(e.target.value) })}
+              className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 hover:border-gray-400"
+            />
+          </div>
+          <Select
+            label="Currency"
+            value={form.currency}
+            onChange={(v) => setForm({ ...form, currency: v })}
+            options={CURRENCIES.map((c) => ({ value: c, label: c }))}
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
-            Purpose
-          </label>
-          <input
-            type="text"
-            required
+          <Select
+            label="Sector"
+            value={form.sector}
+            onChange={(v) => setForm({ ...form, sector: v, purpose: "" })}
+            options={SECTORS.map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))}
+          />
+        </div>
+
+        <div>
+          <Autocomplete
+            label="Purpose"
             value={form.purpose}
-            onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-            placeholder="e.g. Solar irrigation pump purchase"
-            className={fieldClass}
+            onChange={(v) => setForm({ ...form, purpose: v })}
+            suggestions={purposeSuggestions}
+            placeholder={form.sector ? "Start typing or pick a suggestion..." : "Select a sector first for suggestions"}
+            required
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              County
-            </label>
-            <select
-              required
-              value={form.county}
-              onChange={(e) => setForm({ ...form, county: e.target.value })}
-              className={fieldClass}
-            >
-              <option value="">Select county</option>
-              {COUNTIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Sector
-            </label>
-            <select
-              required
-              value={form.sector}
-              onChange={(e) => setForm({ ...form, sector: e.target.value })}
-              className={fieldClass}
-            >
-              <option value="">Select sector</option>
-              {SECTORS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Additional Details <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <textarea
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Any extra context that helps clarify the green classification — equipment specs, certifications, project scale, etc."
+            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 hover:border-gray-400 resize-none"
+          />
         </div>
+
+        <Select
+          label="County"
+          value={form.county}
+          onChange={(v) => setForm({ ...form, county: v })}
+          options={COUNTIES.map((c) => ({ value: c, label: c }))}
+        />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-emerald-700 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-55"
+          className="w-full flex items-center justify-center gap-2 bg-green-700 text-white py-3 rounded-lg text-sm font-medium hover:bg-green-800 disabled:opacity-50 transition shadow-sm"
         >
-          {loading ? "Scoring..." : "Score Loan"}
+          {loading ? (
+            <>
+              <Spinner size={16} />
+              Scoring...
+            </>
+          ) : (
+            "Score Loan"
+          )}
         </button>
 
-        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
 
-      <div className="min-h-72 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        {result ? (
-          <ScoreResult key={result.loanId} result={result} />
-        ) : (
-          <div className="flex h-full min-h-64 flex-col justify-center">
-            <p className="text-sm font-medium text-emerald-700">
-              Awaiting loan details
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-950">
-              Your score will appear here
-            </h2>
-            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
-              Enter the loan amount, purpose, county, and sector to generate a
-              risk level, alignment status, confidence score, and explanation.
-            </p>
-          </div>
-        )}
-      </div>
+      {result && <ScoreResult result={result} />}
     </div>
   );
 }
