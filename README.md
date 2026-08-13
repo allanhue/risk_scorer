@@ -1,13 +1,9 @@
-# Risk Scorer
+# Risk Scorer (under development)
 
-Loan  scoring app built with Next.js and Clerk for authentication.
+Scoring app built with Next.js and Clerk for authentication.
 
-## What it does
 
 - Lets users sign in or register using Clerk
-- Allows authenticated users to submit loan details
-- Sends loan requests to a backend scoring service
-- Stores loan records in a database via the backend
 
 ## Run locally
 
@@ -35,5 +31,5 @@ npm run dev
 
 
 .\venv\Scripts\Activate.ps1  
-(venv) PS C:\risk_scorer\server>  uvicorn main:app --reload --port 8000   
+uvicorn main:app --reload --port 8000   
 

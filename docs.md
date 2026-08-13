@@ -149,6 +149,7 @@ Until the ML model is trained, tested, and shown to be at least as reliable as t
 # Terminal 1 — Backend
 cd server
 # ensure .env has the pooled DATABASE_URL
+venv\Scripts\Activate.ps1   
 uvicorn main:app --reload --port 8000
 
 # Terminal 2 — Frontend

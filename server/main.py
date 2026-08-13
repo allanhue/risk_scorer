@@ -4,6 +4,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
+import os
 
 from services import score_loan, generate_report_pdf, get_rainfall_risk
 from database import engine, get_db, Base
@@ -21,9 +22,11 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[FRONTEND_URL],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -286,3 +289,7 @@ def list_all_loans(
         "page": page,
         "pageSize": pageSize,
     }
+
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
