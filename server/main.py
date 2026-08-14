@@ -24,6 +24,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
+# cors configuration 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[FRONTEND_URL],
