@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { LoanHistoryItem } from "@/lib/types";
-import { getLoanHistory } from "@/lib/api";
-import { ChevronLeft, ChevronRight, FileDown, Leaf } from "lucide-react";
+import { emailReport, getLoanHistory } from "@/lib/api";
+import { ChevronLeft, ChevronRight, FileDown, Leaf, Mail } from "lucide-react";
 
 const RISK_BADGE: Record<string, string> = {
   low: "bg-green-50 text-green-700 border-green-200",
@@ -23,6 +23,8 @@ export default function LoanHistory({ refreshTrigger }: { refreshTrigger?: numbe
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [emailingLoanId, setEmailingLoanId] = useState<string | null>(null);
+  const [emailMessage, setEmailMessage] = useState("");
 
   useEffect(() => {
     if (!user?.id) return;
@@ -46,6 +48,21 @@ export default function LoanHistory({ refreshTrigger }: { refreshTrigger?: numbe
   }, [refreshTrigger]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+
+  async function handleEmailReport(loanId: string) {
+    if (!userEmail) return;
+    setEmailingLoanId(loanId);
+    setEmailMessage("");
+    try {
+      await emailReport(loanId, userEmail);
+      setEmailMessage(`Report sent to ${userEmail}.`);
+    } catch {
+      setEmailMessage("Could not email the report. Check the mail service settings.");
+    } finally {
+      setEmailingLoanId(null);
+    }
+  }
 
   if (loading) {
     return <p className="text-sm text-gray-500 mt-8">Loading history...</p>;
@@ -58,6 +75,7 @@ export default function LoanHistory({ refreshTrigger }: { refreshTrigger?: numbe
   return (
     <div className="mt-10">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Loan History</h2>
+      {emailMessage && <p className="text-sm text-gray-600 mb-3">{emailMessage}</p>}
       <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-500">
@@ -93,15 +111,26 @@ export default function LoanHistory({ refreshTrigger }: { refreshTrigger?: numbe
                   {loan.isGreen ? <Leaf className="h-4 w-4 text-green-600" /> : "—"}
                 </td>
                 <td className="px-4 py-3">
-                  <a
-                    href={`${SCORING_SERVICE_URL}/report/${loan.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-green-700 text-xs font-medium hover:underline"
-                  >
-                    <FileDown className="h-3.5 w-3.5" />
-                    PDF
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={`${SCORING_SERVICE_URL}/report/${loan.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-green-700 text-xs font-medium hover:underline"
+                    >
+                      <FileDown className="h-3.5 w-3.5" />
+                      PDF
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleEmailReport(loan.id)}
+                      disabled={!userEmail || emailingLoanId === loan.id}
+                      className="inline-flex items-center gap-1 text-green-700 text-xs font-medium hover:underline disabled:opacity-50"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      {emailingLoanId === loan.id ? "Sending" : "Email"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

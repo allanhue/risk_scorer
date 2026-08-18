@@ -28,8 +28,11 @@ npm run dev
 
 - The backend expects `DATABASE_URL` in `server/.env`
 - The frontend uses Clerk for auth and the scoring API at `http://localhost:8000`
+- Email sending uses Brevo transactional email when these backend env vars are set:
+  - `BREVO_API_KEY`
+  - `MAIL_FROM`
+  - `MAIL_FROM_NAME`
 
 
 .\venv\Scripts\Activate.ps1  
 uvicorn main:app --reload --port 8000   
-

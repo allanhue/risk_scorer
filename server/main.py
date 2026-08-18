@@ -5,8 +5,17 @@ from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
 import os
+import logging
 
-from services import score_loan, generate_report_pdf, get_rainfall_risk
+from services import (
+    MailConfigurationError,
+    MailDeliveryError,
+    score_loan,
+    generate_report_pdf,
+    get_rainfall_risk,
+    send_report_email,
+    send_welcome_email,
+)
 from database import engine, get_db, Base
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -17,6 +26,7 @@ import models
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -60,6 +70,30 @@ class UserProfileInput(BaseModel):
     name: str
     institution: str
     role: str  # "OFFICER" | "AUDITOR" | "ADMIN"
+
+
+class EmailReportInput(BaseModel):
+    recipientEmail: Optional[str] = None
+
+
+def build_report_payload(db_loan):
+    loan_dict = {
+        "loanAmount": db_loan.loan_amount,
+        "currency": db_loan.currency,
+        "purpose": db_loan.purpose,
+        "description": db_loan.description,
+        "sector": db_loan.sector,
+        "county": db_loan.county,
+    }
+
+    score_dict = {
+        "riskLevel": db_loan.score.risk_level,
+        "isGreen": db_loan.score.is_green,
+        "confidence": db_loan.score.confidence,
+        "explanation": db_loan.score.explanation,
+    }
+    climate_dict = get_rainfall_risk(db_loan.county)
+    return loan_dict, score_dict, climate_dict
 
 
 # scoring authenticated
@@ -149,15 +183,23 @@ def score_public(request: Request, loan: PublicLoanInput, db: Session = Depends(
 @app.post("/users/profile")
 def set_profile(profile: UserProfileInput, db: Session = Depends(get_db)):
     user = db.query(models.User).filter_by(id=profile.userId).first()
+    is_new_user = user is None
     if not user:
         user = models.User(id=profile.userId, email=profile.email)
         db.add(user)
 
+    user.email = profile.email
     user.name = profile.name
     user.institution = profile.institution
     user.role = profile.role
     db.commit()
     db.refresh(user)
+
+    if is_new_user and user.email:
+        try:
+            send_welcome_email(user.email, user.name)
+        except (MailConfigurationError, MailDeliveryError) as exc:
+            logger.warning("Welcome email was not sent for user %s: %s", user.id, exc)
 
     return {"id": user.id, "role": user.role, "name": user.name, "institution": user.institution}
 
@@ -177,24 +219,7 @@ def get_report(loan_id: str, db: Session = Depends(get_db)):
     if not db_loan or not db_loan.score:
         raise HTTPException(status_code=404, detail="Loan or score not found")
 
-    
-    loan_dict = {
-    "loanAmount": db_loan.loan_amount,
-    "currency": db_loan.currency,
-    "purpose": db_loan.purpose,
-    "description": db_loan.description,
-    "sector": db_loan.sector,
-    "county": db_loan.county,
-}
-    
-    score_dict = {
-        "riskLevel": db_loan.score.risk_level,
-        "isGreen": db_loan.score.is_green,
-        "confidence": db_loan.score.confidence,
-        "explanation": db_loan.score.explanation,
-    }
-    climate_dict = get_rainfall_risk(db_loan.county)
-
+    loan_dict, score_dict, climate_dict = build_report_payload(db_loan)
     is_public = db_loan.user_id is None
     pdf_bytes = generate_report_pdf(loan_dict, score_dict, climate_dict, watermark=is_public)
 
@@ -203,6 +228,35 @@ def get_report(loan_id: str, db: Session = Depends(get_db)):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=loan_report_{loan_id[:8]}.pdf"},
     )
+
+
+@app.post("/report/{loan_id}/email")
+def email_report(loan_id: str, payload: EmailReportInput, db: Session = Depends(get_db)):
+    db_loan = db.query(models.Loan).filter_by(id=loan_id).first()
+    if not db_loan or not db_loan.score:
+        raise HTTPException(status_code=404, detail="Loan or score not found")
+
+    recipient_email = db_loan.submitted_by.email if db_loan.submitted_by else payload.recipientEmail
+    if not recipient_email:
+        raise HTTPException(status_code=400, detail="A recipient email is required")
+
+    loan_dict, score_dict, climate_dict = build_report_payload(db_loan)
+    is_public = db_loan.user_id is None
+    pdf_bytes = generate_report_pdf(loan_dict, score_dict, climate_dict, watermark=is_public)
+
+    try:
+        send_report_email(
+            to_email=recipient_email,
+            to_name=db_loan.submitted_by.name if db_loan.submitted_by else "",
+            loan_id=loan_id,
+            pdf_bytes=pdf_bytes,
+        )
+    except MailConfigurationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except MailDeliveryError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return {"sent": True, "recipientEmail": recipient_email}
 
 
 #  Loan history
