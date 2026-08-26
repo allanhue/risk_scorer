@@ -76,6 +76,39 @@ def send_report_email(
     )
 
 
+def send_support_email(
+    *,
+    from_email: str,
+    from_name: str,
+    subject: str,
+    message: str,
+) -> None:
+    support_email = os.getenv("SUPPORT_EMAIL") or os.getenv("MAIL_FROM")
+    if not support_email:
+        raise MailConfigurationError("SUPPORT_EMAIL or MAIL_FROM must be set to receive support email.")
+
+    escaped_name = html.escape(from_name.strip() or "App user")
+    escaped_email = html.escape(from_email.strip() or "No reply email provided")
+    escaped_subject = html.escape(subject.strip() or "Support request")
+    escaped_message = html.escape(message).replace("\n", "<br>")
+
+    send_transactional_email(
+        to_email=support_email,
+        to_name="Support",
+        subject=f"Support request: {subject.strip() or 'General help'}",
+        html_content=f"""
+        <html>
+          <body>
+            <p><strong>From:</strong> {escaped_name} ({escaped_email})</p>
+            <p><strong>Subject:</strong> {escaped_subject}</p>
+            <p><strong>Message:</strong></p>
+            <p>{escaped_message}</p>
+          </body>
+        </html>
+        """,
+    )
+
+
 def send_transactional_email(
     *,
     to_email: str,
