@@ -1,6 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import Navbar from "@/components/navbar";
-import BackendStatusBanner from "@/components/back_status_banner";
+import Navbar from "@/components/nav_bar";
+import BackendStatusBanner from "@/components/status_banner";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
