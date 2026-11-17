@@ -6,7 +6,7 @@ It is designed to reduce manual review time, improve explainability, and give te
 
 **Current status (Aug 2026):** The product is live with rules-based scoring. Live climate data feeds, PDF export, public demo access, and a production ML model are not yet implemented.
 
----
+
 
 ## 1. Product overview
 
