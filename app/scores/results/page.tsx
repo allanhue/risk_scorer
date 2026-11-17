@@ -29,9 +29,19 @@ const CLIMATE_META: Record<string, { label: string; color: string; icon: Element
   unknown: { label: "Live data unavailable", color: "text-gray-500 bg-gray-50 border-gray-200", icon: HelpCircle },
 };
 
-export default function ScoreResult({ result }: { result: ScoreResponse }) {
+export default function ScoreResult({ result }: { result?: ScoreResponse }) {
   const { user } = useUser();
   const [mailStatus, setMailStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  if (!result) {
+    return (
+      <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5 text-sm text-gray-700">
+        No score result is available. Submit a scoring request to view its results.
+      </div>
+    );
+  }
+
+  const score = result;
   const riskKey = result.riskLevel?.toLowerCase() || "unknown";
   const climateKey = result.climateSignal?.status || "unknown";
   const climate = CLIMATE_META[climateKey] || CLIMATE_META.unknown;
@@ -42,7 +52,7 @@ export default function ScoreResult({ result }: { result: ScoreResponse }) {
   async function handleEmailReport() {
     setMailStatus("sending");
     try {
-      await emailReport(result.loanId, userEmail);
+      await emailReport(score.loanId, userEmail);
       setMailStatus("sent");
     } catch {
       setMailStatus("error");
@@ -50,7 +60,7 @@ export default function ScoreResult({ result }: { result: ScoreResponse }) {
   }
 
   return (
-    <div className={`mt-6 p-5 rounded-lg border ${RISK_COLORS[result.riskLevel]}`}>
+    <div className={`mt-6 p-5 rounded-lg border ${RISK_COLORS[riskKey] || "bg-gray-50 text-gray-700 border-gray-200"}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
         <div>
           <span className="flex items-center gap-1.5 font-semibold uppercase text-sm">
