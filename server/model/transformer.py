@@ -73,6 +73,10 @@ def predict_one(model_dir: Path, row: dict[str, str], threshold: float = 0.5) ->
 
 
 def _read_rows(path: Path, label_names: list[str] | None = None) -> tuple[list[dict], list[str]]:
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"CSV file not found: {path}. Create this file with project_text and taxonomy_labels columns first."
+        )
     with path.open("r", newline="", encoding="utf-8-sig") as source:
         reader = csv.DictReader(source)
         missing = REQUIRED_COLUMNS - set(reader.fieldnames or [])
@@ -246,7 +250,10 @@ def main() -> None:
     predict_parser.set_defaults(func=predict)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except (OSError, ValueError) as exc:
+        parser.error(str(exc))
 
 
 if __name__ == "__main__":

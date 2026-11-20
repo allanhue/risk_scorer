@@ -1,0 +1,11 @@
+project_text,taxonomy_labels,purpose,sector,county,loan_amount,currency,technology,evidence
+SYNTHETIC DEMO ONLY: rooftop solar array with battery storage for a small farm,solar_energy,Install renewable power,energy,Nakuru,500000,KES,solar PV; battery,Example only
+SYNTHETIC DEMO ONLY: solar mini-grid supplying a rural market and nearby homes,solar_energy,Build community electricity access,energy,Kitui,1200000,KES,solar mini-grid,Example only
+SYNTHETIC DEMO ONLY: drip irrigation and water storage for drought-resilient vegetables,sustainable_agriculture,Improve farm water efficiency,agriculture,Makueni,350000,KES,drip irrigation; water storage,Example only
+SYNTHETIC DEMO ONLY: agroforestry project adding indigenous trees to a tea farm,sustainable_agriculture,Expand climate-smart farming,agriculture,Kericho,420000,KES,agroforestry,Example only
+SYNTHETIC DEMO ONLY: electric buses replacing diesel vehicles on an urban route,clean_transport,Upgrade public transit,transport,Nairobi,2500000,KES,electric buses,Example only
+SYNTHETIC DEMO ONLY: charging stations for an electric motorcycle delivery fleet,clean_transport,Support electric mobility,transport,Kisumu,800000,KES,EV charging,Example only
+SYNTHETIC DEMO ONLY: loan request mentions a green project but gives no equipment or activity details,needs_more_evidence,Finance a project,manufacturing,Nakuru,600000,KES,unspecified,No supporting documents
+SYNTHETIC DEMO ONLY: applicant describes water improvements without naming the system or project location,needs_more_evidence,Improve water use,agriculture,Embu,300000,KES,unspecified,Details pending
+SYNTHETIC DEMO ONLY: purchase of a diesel generator for a warehouse,not_eligible,Buy backup power,manufacturing,Nairobi,450000,KES,diesel generator,Example only
+SYNTHETIC DEMO ONLY: finance a petrol-powered delivery van,not_eligible,Replace delivery vehicle,transport,Mombasa,900000,KES,petrol van,Example only

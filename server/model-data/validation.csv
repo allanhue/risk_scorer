@@ -1,0 +1,6 @@
+project_text,taxonomy_labels,purpose,sector,county,loan_amount,currency,technology,evidence
+SYNTHETIC DEMO ONLY: solar panels and battery to power a rural clinic,solar_energy,Install renewable power,energy,Meru,380000,KES,solar PV; battery,Example only
+SYNTHETIC DEMO ONLY: conservation farming and tree planting on a small farm,sustainable_agriculture,Improve farm resilience,agriculture,Bungoma,270000,KES,agroforestry; conservation tillage,Example only
+SYNTHETIC DEMO ONLY: electric minibuses for public transport between towns,clean_transport,Upgrade transit,transport,Kakamega,1500000,KES,electric minibuses,Example only
+SYNTHETIC DEMO ONLY: proposed efficiency project has no technology or evidence listed,needs_more_evidence,Improve efficiency,manufacturing,Nyeri,500000,KES,unspecified,Details pending
+SYNTHETIC DEMO ONLY: purchase of a diesel water pump for a farm,not_eligible,Buy farm equipment,agriculture,Garissa,280000,KES,diesel pump,Example only

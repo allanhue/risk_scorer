@@ -8,3 +8,5 @@ python-dotenv
 requests
 reportlab
 slowapi
+tiktoken
+protobuf>=4.25.3

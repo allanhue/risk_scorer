@@ -49,7 +49,7 @@ python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r model\requirements-ml.txt
 ```
 
-For an NVIDIA GPU, choose Windows/Pip/the installed CUDA version on the [official PyTorch install page](https://pytorch.org/get-started/locally/), install its `torch` command, then install `model\requirements-ml.txt`. The optional requirements contain Transformers, Accelerate, SentencePiece, and NumPy. They are separate from `server/requirements.txt` so the production rules service does not need the ML stack.
+For an NVIDIA GPU, choose Windows/Pip/the installed CUDA version on the [official PyTorch install page](https://pytorch.org/get-started/locally/), install its `torch` command, then install `model\requirements-ml.txt`. The optional requirements contain Transformers, Accelerate, SentencePiece, Protobuf, and NumPy. Protobuf is needed for the DeBERTa SentencePiece tokenizer. They are separate from `server/requirements.txt` so the production rules service does not need the ML stack.
 
 The training default is `microsoft/deberta-v3-base`. For English/Swahili or other multilingual text, use `FacebookAI/xlm-roberta-base`. The base weights download the first time. Training resource needs depend on the data, sequence length, and hardware.
 
@@ -64,6 +64,14 @@ Training and validation CSVs require:
 
 Optional columns are `purpose`, `description`, `sector`, `county`, `loan_amount`, `currency`, `technology`, and `evidence`. The training label vocabulary is used for validation; validation cannot introduce new labels. Keep a separate untouched holdout CSV for final evaluation.
 
+The repository now includes `model-data/train.csv` and `model-data/validation.csv` as tiny **synthetic smoke-test fixtures**. Their labels are deliberately invented to exercise the training code only; they are not evidence of taxonomy or model quality. Replace them with reviewed records before doing any real evaluation. For a new dataset, create a directory and CSVs with this header:
+
+```csv
+project_text,taxonomy_labels,purpose,sector,county,loan_amount,currency,technology,evidence
+```
+
+Add one row per reviewed application to each split. To create reliable data, gather de-identified project/application descriptions and relevant structured fields; write a label guide; have qualified reviewers assign one or more taxonomy labels; adjudicate disagreements; then split by borrower/project or time into training, validation, and a separate untouched holdout set. Do not put names, account numbers, or other personal identifiers in `project_text` or `evidence`. Preserve the same exact label spelling across files.
+
 From `server/`:
 
 ```powershell
@@ -76,7 +84,7 @@ For the multilingual encoder:
 python -m model.transformer train model-data\train.csv model-data\validation.csv --base-model FacebookAI/xlm-roberta-base --output-dir model-artifacts\taxonomy-encoder
 ```
 
-Training writes model weights, tokenizer, and label configuration under `server/model-artifacts/`, which is ignored by Git.
+Training writes model weights, tokenizer, and label configuration under `server/model-artifacts/`, which is ignored by Git. The included fixtures are small, so training them only checks that the install/data/model pipeline runs; resulting weights must not be used for lending, demos presented as real predictions, or quality claims.
 
 ## 5. Predict and evaluate offline
 
@@ -135,7 +143,7 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/model/taxonomy/predict" `
   -Method Post -ContentType "application/json" -Body $body
 ```
 
-The response includes predicted labels, per-label scores, the threshold, and `requiresHumanReview: true`. If packages or a trained artifact are missing, the endpoint returns HTTP 503. `/score` remains the rules-based loan scoring endpoint.
+The response includes predicted labels, per-label scores, the threshold, and `requiresHumanReview: true`. If packages or a trained artifact are missing, the endpoint returns HTTP 503 with a reason-specific message. Installing packages does not create a trained artifact; the model must be trained and saved under `server/model-artifacts/taxonomy-encoder` (or `TAXONOMY_MODEL_PATH`). `/score` remains the rules-based loan scoring endpoint.
 
 ## 7. Manual smoke checks
 
@@ -178,3 +186,5 @@ Confirm a JSON response includes `riskLevel`, `isGreen`, `confidence`, `explanat
 After training and installing the optional packages, send the JSON example in Section 6 through Postman. Confirm the response includes `predictions`, `labelScores`, `threshold`, `requiresHumanReview`, and `productionScoringUsed: false`. Before training, HTTP 503 is expected. Verify `/score` still responds through the rules engine independently.
 
 Automated Python tests are not currently included in this work; these are manual smoke checks. Do not describe model quality based on smoke checks—use the held-out labeled evaluation described above.
+
+

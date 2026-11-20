@@ -2,4 +2,5 @@
 transformers==5.23.0
 accelerate>=1.0.0
 sentencepiece>=0.2.0
+protobuf>=4.25.3
 numpy>=1.26

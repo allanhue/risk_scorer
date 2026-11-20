@@ -130,10 +130,18 @@ def predict_taxonomy(request: Request, loan: TaxonomyPredictionInput):
             "technology": loan.technology or "",
             "evidence": loan.evidence or "",
         })
-    except (FileNotFoundError, ImportError) as exc:
+    except FileNotFoundError as exc:
         raise HTTPException(
             status_code=503,
-            detail="Taxonomy transformer is unavailable. Install server/model/requirements-ml.txt and train a model first.",
+            detail=(
+                f"No trained taxonomy model was found at {model_path}. "
+                "Train one with `python -m model.transformer train` before calling this endpoint."
+            ),
+        ) from exc
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Transformer packages are unavailable in the API Python environment. Install server/model/requirements-ml.txt there.",
         ) from exc
 
     return {
