@@ -15,8 +15,8 @@ if not DATABASE_URL:
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # tests connection before using it, reconnects if stale
-    pool_recycle=300,     # recycle connections every 5 min, before Neon can kill them
+    pool_pre_ping=True,   # tests connection 
+    pool_recycle=300,     # recycle connections every 5 min 
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

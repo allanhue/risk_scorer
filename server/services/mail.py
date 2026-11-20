@@ -38,7 +38,7 @@ def send_welcome_email(to_email: str, name: str = "") -> bool:
           <body>
             <p>Hi {display_name},</p>
             <p>Your Green Taxonomy Risk Scorer account is ready.</p>
-            <p>You can now score loans, download PDF reports, and keep a history of your submissions.</p>
+            <p>You can now score loans, download PDF reports and keep a history of your submissions.</p>
           </body>
         </html>
         """,
