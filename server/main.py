@@ -69,7 +69,7 @@ class UserProfileInput(BaseModel):
     email: str
     name: str
     institution: str
-    role: str  # "OFFICER" | "AUDITOR" | "ADMIN"
+    role: str  
 
 
 class EmailReportInput(BaseModel):

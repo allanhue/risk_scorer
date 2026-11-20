@@ -10,13 +10,13 @@ load_dotenv(dotenv_path=env_path)
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError(
-        "DATABASE_URL is not set. Please add it to server/.env or export it in the environment."
+        "DATABASE_URL is not set. Please add or export it in the environment."
     )
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # tests connection before using it, reconnects if stale
-    pool_recycle=300,     # recycle connections every 5 min, before Neon can kill them
+    pool_pre_ping=True,   # tests connection 
+    pool_recycle=300,     # recycle connections every 5 min 
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

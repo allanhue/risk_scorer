@@ -1,7 +1,5 @@
 # Risk Scorer (under development)
 
-Scoring app built with Next.js and Clerk for authentication.
-
 
 - Lets users sign in or register using Clerk
 
@@ -12,6 +10,7 @@ Scoring app built with Next.js and Clerk for authentication.
 ```bash
 cd server
 pip install -r requirements.txt
+.\venv\Scripts\Activate.ps1  
 uvicorn main:app --reload --port 8000
 ```
 
@@ -34,5 +33,4 @@ npm run dev
   - `MAIL_FROM_NAME`
 
 
-.\venv\Scripts\Activate.ps1  
 uvicorn main:app --reload --port 8000   
