@@ -3,7 +3,7 @@ import json
 import time
 from pathlib import Path
 from datetime import date, timedelta
-from services.county_coords import COUNTY_COORDS
+from services.county_coords import canonical_location_name, get_location_coordinates
 
 CACHE_FILE = Path(__file__).parent / "climate_cache.json"
 
@@ -29,11 +29,11 @@ _cache = _load_cache()
 
 
 def _cache_key(county: str) -> str:
-    return f"{county}:{date.today().isoformat()}"
+    return f"{canonical_location_name(county)}:{date.today().isoformat()}"
 
 
 def _fallback_risk(county: str) -> dict:
-    county_key = county.lower()
+    county_key = canonical_location_name(county).casefold()
     if county_key in {"turkana", "marsabit", "wajir", "mandera", "garissa", "baringo"}:
         return {"status": "drought_risk", "anomaly_pct": -45.0}
     if county_key in {"nakuru", "kisumu", "mombasa", "nairobi"}:
@@ -55,7 +55,7 @@ def get_rainfall_risk(county: str) -> dict:
         print(f"[climate] cache hit for {county}")
         return cached
 
-    coords = COUNTY_COORDS.get(county)
+    coords = get_location_coordinates(county)
     if not coords:
         return {"status": "unknown", "anomaly_pct": None}
 

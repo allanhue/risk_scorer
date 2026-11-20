@@ -1,6 +1,7 @@
 import yaml
 from pathlib import Path
 from services.climate import get_rainfall_risk
+from services.county_coords import canonical_location_name
 
 RULES_PATH = Path(__file__).parent / "kgft_rules.yaml"
 
@@ -19,10 +20,20 @@ def classify_green(sector: str, purpose: str, description: str = "") -> bool:
 
 
 def get_static_county_risk(county: str) -> str:
+    canonical_county = canonical_location_name(county)
     for level, counties in RULES["county_risk"].items():
-        if county in counties:
+        if canonical_county.casefold() in {name.casefold() for name in counties}:
             return level
     return "medium"
+
+
+def has_static_county_risk(county: str) -> bool:
+    canonical_county = canonical_location_name(county).casefold()
+    return any(
+        canonical_county == name.casefold()
+        for counties in RULES["county_risk"].values()
+        for name in counties
+    )
 
 
 def score_loan(
@@ -35,6 +46,7 @@ def score_loan(
 ) -> dict:
     is_green = classify_green(sector, purpose, description)
     static_risk = get_static_county_risk(county)
+    has_location_tier = has_static_county_risk(county)
     climate = get_rainfall_risk(county)
 
     effective_risk = static_risk
@@ -60,9 +72,14 @@ def score_loan(
     elif climate["status"] == "unknown":
         climate_note = " Live climate data unavailable; used baseline county risk only."
 
+    location_explanation = (
+        f"{county} has {static_risk} baseline climate hazard exposure."
+        if has_location_tier
+        else f"No location-specific baseline tier is configured for {county}; used the medium default."
+    )
     explanation = (
         f"{'Green-aligned' if is_green else 'Not green-aligned'} activity in {sector} sector. "
-        f"{county} has {static_risk} baseline climate hazard exposure.{climate_note}"
+        f"{location_explanation}{climate_note}"
     )
 
     return {

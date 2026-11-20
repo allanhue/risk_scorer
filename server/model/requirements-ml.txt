@@ -1,0 +1,5 @@
+# Install a PyTorch build separately for your CPU or CUDA setup (see docs.md).
+transformers==5.23.0
+accelerate>=1.0.0
+sentencepiece>=0.2.0
+numpy>=1.26
