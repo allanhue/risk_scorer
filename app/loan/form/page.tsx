@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { LoanInput, ScoreResponse } from "@/lib/types";
 import { scoreLoan } from "@/lib/api";
+import { LOCATION_OPTIONS } from "@/lib/locations";
 import ScoreResult from "@/scores/results/page";
 import Select from "@/components/select";
 import Autocomplete from "@/components/autocomplete";
@@ -11,7 +12,6 @@ import Spinner from "@/components/spinner";
 import { Sparkles } from "lucide-react";
 
 const SECTORS = ["energy", "agriculture", "manufacturing", "transport", "construction"];
-const COUNTIES = ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Turkana"];
 const CURRENCIES = ["KES", "USD", "EUR", "GBP", "UGX", "TZS"];
 
 // Suggested purposes per sector — feeds the datalist for quick, guided entry
@@ -115,10 +115,10 @@ export default function LoanForm({ onScored }: { onScored?: () => void }) {
         </div>
 
         <Select
-          label="County"
+          label="County or region"
           value={form.county}
           onChange={(v) => setForm({ ...form, county: v })}
-          options={COUNTIES.map((c) => ({ value: c, label: c }))}
+          options={[...LOCATION_OPTIONS]}
         />
 
         <button

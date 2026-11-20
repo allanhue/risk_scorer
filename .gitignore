@@ -45,6 +45,7 @@ next-env.d.ts
 
 /app/generated/prisma
 /server/generated/prisma
+/server/model-artifacts/
 
 # python
 /server/venv/

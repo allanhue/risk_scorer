@@ -5,9 +5,9 @@ export default function Home() {
     <div className="bg-[#f7faf8]">
       <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
         <div>
-          <span className="inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-sm font-medium text-emerald-800 shadow-sm">
+          {/* <span className="inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-sm font-medium text-emerald-800 shadow-sm">
             Built on Kenya&apos;s Green Finance Taxonomy (KGFT)
-          </span>
+          </span> */}
 
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
             Score loans for green alignment and climate risk in seconds

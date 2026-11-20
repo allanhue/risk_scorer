@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { LOCATION_OPTIONS } from "@/lib/locations";
 
 const SCORING_SERVICE_URL =
   process.env.NEXT_PUBLIC_SCORING_SERVICE_URL || "http://localhost:8000";
 
 const SECTORS = ["energy", "agriculture", "manufacturing", "transport", "construction"];
-const COUNTIES = ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Turkana"];
 
 export default function DemoPage() {
   const [form, setForm] = useState({ loanAmount: 0, purpose: "", county: "", sector: "" });
@@ -76,15 +76,17 @@ export default function DemoPage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">County</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">County or region</label>
             <select
               required
               value={form.county}
               onChange={(e) => setForm({ ...form, county: e.target.value })}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
             >
-              <option value="">Select county</option>
-              {COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <option value="">Select county or location</option>
+              {LOCATION_OPTIONS.map((location) => (
+                <option key={location.value} value={location.value}>{location.label}</option>
+              ))}
             </select>
           </div>
           <div>

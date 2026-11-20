@@ -6,6 +6,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 import os
 import logging
+from pathlib import Path
 
 from services import (
     MailConfigurationError,
@@ -64,6 +65,18 @@ class PublicLoanInput(BaseModel):
     sector: str
 
 
+class TaxonomyPredictionInput(BaseModel):
+    projectText: str
+    loanAmount: float
+    currency: str = "KES"
+    purpose: str
+    description: Optional[str] = None
+    county: str
+    sector: str
+    technology: Optional[str] = None
+    evidence: Optional[str] = None
+
+
 class UserProfileInput(BaseModel):
     userId: str
     email: str
@@ -97,6 +110,40 @@ def build_report_payload(db_loan):
 
 
 # scoring authenticated
+
+@app.post("/model/taxonomy/predict")
+@limiter.limit("10/minute")
+def predict_taxonomy(request: Request, loan: TaxonomyPredictionInput):
+    """Optional transformer inference; the /score rules path remains authoritative."""
+    configured_path = Path(os.getenv("TAXONOMY_MODEL_PATH", "model-artifacts/taxonomy-encoder"))
+    model_path = configured_path if configured_path.is_absolute() else Path(__file__).parent / configured_path
+    try:
+        from model.transformer import predict_one
+        prediction = predict_one(model_path, {
+            "project_text": loan.projectText,
+            "loan_amount": str(loan.loanAmount),
+            "currency": loan.currency,
+            "purpose": loan.purpose,
+            "description": loan.description or "",
+            "county": loan.county,
+            "sector": loan.sector,
+            "technology": loan.technology or "",
+            "evidence": loan.evidence or "",
+        })
+    except (FileNotFoundError, ImportError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Taxonomy transformer is unavailable. Install server/model/requirements-ml.txt and train a model first.",
+        ) from exc
+
+    return {
+        "modelType": "multi_label_taxonomy_transformer",
+        "predictions": prediction["predictedLabels"],
+        "labelScores": prediction["labelScores"],
+        "threshold": prediction["threshold"],
+        "requiresHumanReview": True,
+        "productionScoringUsed": False,
+    }
 
 @app.post("/score")
 @limiter.limit("5/minute")
